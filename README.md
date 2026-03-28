@@ -96,6 +96,23 @@ Use the **Docker Compose** build pack ([docs](https://coolify.io/docs/builds/pac
 
 Magic variables `SERVICE_URL_N8N_5678` / `SERVICE_FQDN_N8N` in `docker-compose.yml` need a recent Coolify v4 for Git-based deploys.
 
+### Troubleshooting: “configured to use a secure cookie” on `/setup`
+
+n8n shows this when **`N8N_SECURE_COOKIE=true`** but you open the UI over **plain HTTP** (e.g. `http://your-host:8090`), or Safari quirks. Your URL uses **http** and a port, so the cookie mode does not match.
+
+**Option A — you are staying on HTTP (LAN, sslip.io, or no TLS yet):** in Coolify → your app → **Environment variables**, set at least:
+
+| Variable | Value |
+|----------|--------|
+| `N8N_SECURE_COOKIE` | `false` |
+| `N8N_PROTOCOL` | `http` |
+| `WEBHOOK_URL` | Your full public URL with trailing slash, e.g. `http://e9lc2n62kwr66026n11tgzrm.192.168.68.52.sslip.io:8090/` |
+| `N8N_HOST` | Hostname only if you set it explicitly, e.g. `e9lc2n62kwr66026n11tgzrm.192.168.68.52.sslip.io` |
+
+Redeploy or restart the app after saving.
+
+**Option B (recommended for anything exposed beyond your LAN):** terminate **HTTPS** in Coolify’s proxy, use `https://` in the browser, then set `N8N_PROTOCOL=https`, `N8N_SECURE_COOKIE=true`, `N8N_PROXY_HOPS=1` (if behind the proxy), and `WEBHOOK_URL` to the **https** URL.
+
 ## Data and backups
 
 - **Docker Compose:** workflows and credentials live in the volume **`n8n_data`** (`/home/node/.n8n` in the container). Back up that volume.
