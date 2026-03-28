@@ -1,0 +1,5 @@
+# Nixpacks (Coolify default): treat as Node — npm ci, npm run build, npm start
+# https://nixpacks.com/docs/configuration/file
+
+[variables]
+NIXPACKS_NODE_VERSION = "22"

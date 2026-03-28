@@ -6,7 +6,10 @@ Minimal [Docker Compose](https://docs.docker.com/compose/) stack for [n8n](https
 
 | File | Purpose |
 |------|--------|
-| `docker-compose.yml` | n8n service, persistent volume `n8n_data`, port **5678** |
+| `docker-compose.yml` | n8n **official Docker image**, volume `n8n_data`, port **5678** |
+| `package.json` / `scripts/start.js` | **Nixpacks** (Coolify default): installs `n8n` from npm and runs `npm start` |
+| `nixpacks.toml` | Nixpacks hints (Node 22) |
+| `.npmrc` | `legacy-peer-deps=true` so npm install/ci stays reliable |
 | `.env.example` | Copy to `.env` and adjust host, timezone, and URLs |
 
 ## What you can do with self-hosted n8n
@@ -67,34 +70,45 @@ The open-source self-hosted edition covers typical automation needs. **Enterpris
 
 ## Coolify
 
-Coolify **defaults to Nixpacks** (auto-build Node, PHP, etc.). This repo has **no** `package.json`—only **`docker-compose.yml`**—so Nixpacks will fail with *“Nixpacks failed to detect the application type”*. You must use the **Docker Compose** build pack ([docs](https://coolify.io/docs/builds/packs/docker-compose)).
+Two supported ways to deploy; pick one.
 
-### Create or fix the resource
+### A. Nixpacks (Coolify default — “Application”)
 
-1. **New resource** → connect this Git repo → on the step where Coolify picks a **build pack**, open the dropdown (it may show **Nixpacks** by default) and choose **Docker Compose**.
-2. **Base directory**: `/` (repo root).
-3. **Docker Compose Location**: `docker-compose.yml` (must match the filename exactly).
-4. Branch: **`main`**, then deploy.
+Coolify’s default **Nixpacks** build pack detects Node from `package.json`, runs `npm install`, `npm run build`, then `npm start` ([Nixpacks Node](https://nixpacks.com/docs/providers/node)). This repo installs the [`n8n` npm package](https://docs.n8n.io/hosting/installation/npm/) and starts it; `scripts/start.js` maps Coolify’s `PORT` to `N8N_PORT`.
 
-If you already created the resource as a normal **Application** (Nixpacks): open the service **Configuration** → **Build Pack** (or General) → switch to **Docker Compose**, set **Base directory** and **Docker Compose file path** as above, save, redeploy. If the UI still behaves like Nixpacks, create a **new** Docker Compose resource and delete the old one ([known quirks](https://github.com/coollabsio/coolify/issues/2972) when switching packs).
+1. **New resource** → **Application** (or Public Git) → repo **main**, build pack **Nixpacks** (default).
+2. **Base directory**: `/`.
+3. Set the same env vars as in the compose path for HTTPS (see below): `TZ`, `GENERIC_TIMEZONE`, `N8N_PROTOCOL`, `N8N_PORT` (often `443` behind proxy), `WEBHOOK_URL`, `N8N_SECURE_COOKIE`, `N8N_PROXY_HOPS`, etc.
+4. **Persist data**: unlike Docker Compose, there is no named volume unless you add one in Coolify. Map a **persistent storage** directory to n8n’s data folder (by default under the app user’s home, e.g. `~/.n8n`), or set [`N8N_USER_FOLDER`](https://docs.n8n.io/hosting/configuration/environment-variables/deployment/) to a mounted path—otherwise workflows/credentials can be lost on redeploy.
 
-### After it runs
+**Note:** The Nixpacks path installs n8n via **npm** (large install). The **Docker Compose** path uses the **official image** and is usually smaller/faster to deploy and matches [n8n’s Docker docs](https://docs.n8n.io/hosting/installation/docker/) exactly.
 
-1. Assign a domain to service **`n8n`** for container port **5678** ([exposing services](https://coolify.io/docs/knowledge-base/docker/compose)).
-2. For HTTPS behind Coolify’s proxy, set environment variables in the UI (see `.env.example`): e.g. `N8N_PROTOCOL=https`, `N8N_PORT=443`, `N8N_SECURE_COOKIE=true`, `N8N_PROXY_HOPS=1`.
+### B. Docker Compose (official image)
 
-Optional Coolify magic variables (`SERVICE_URL_N8N_5678`, `SERVICE_FQDN_N8N`) are referenced as fallbacks in `docker-compose.yml`; Git-based support needs a recent Coolify v4 (see Coolify docs).
+Use the **Docker Compose** build pack ([docs](https://coolify.io/docs/builds/packs/docker-compose)) if you want the pre-built image only:
+
+1. **Build pack**: **Docker Compose** (not Nixpacks).
+2. **Base directory**: `/`, **Docker Compose Location**: `docker-compose.yml`.
+3. Assign a domain to service **`n8n`** on container port **5678** ([exposing services](https://coolify.io/docs/knowledge-base/docker/compose)).
+4. Env vars for HTTPS (e.g. `N8N_PROTOCOL=https`, `N8N_PORT=443`, `N8N_SECURE_COOKIE=true`, `N8N_PROXY_HOPS=1`) — see `.env.example`.
+
+Magic variables `SERVICE_URL_N8N_5678` / `SERVICE_FQDN_N8N` in `docker-compose.yml` need a recent Coolify v4 for Git-based deploys.
 
 ## Data and backups
 
-Workflows and credentials live in the Docker volume **`n8n_data`** (mounted at `/home/node/.n8n` in the container). Back up that volume or your NAS backup that includes it.
+- **Docker Compose:** workflows and credentials live in the volume **`n8n_data`** (`/home/node/.n8n` in the container). Back up that volume.
+- **Nixpacks / npm:** data is under the n8n user folder (default `~/.n8n` unless `N8N_USER_FOLDER` is set). Configure **persistent storage** in Coolify (or equivalent) so redeploys do not wipe it.
 
 ## Updating
+
+**Docker Compose:**
 
 ```bash
 docker compose pull
 docker compose up -d
 ```
+
+**Nixpacks:** bump the `n8n` version in `package.json`, commit, redeploy; or use a range and redeploy to pick up patches per your policy.
 
 ## References
 
