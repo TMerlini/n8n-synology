@@ -67,9 +67,21 @@ The open-source self-hosted edition covers typical automation needs. **Enterpris
 
 ## Coolify
 
-1. New resource → **Docker Compose** → point at this repository and branch **`main`**.
-2. Assign a domain to service **`n8n`** for container port **5678** (see [Coolify Docker Compose](https://coolify.io/docs/knowledge-base/docker/compose)).
-3. For HTTPS behind Coolify’s proxy, set environment variables in the UI (see comments in `.env.example`): e.g. `N8N_PROTOCOL=https`, `N8N_PORT=443`, `N8N_SECURE_COOKIE=true`, `N8N_PROXY_HOPS=1`.
+Coolify **defaults to Nixpacks** (auto-build Node, PHP, etc.). This repo has **no** `package.json`—only **`docker-compose.yml`**—so Nixpacks will fail with *“Nixpacks failed to detect the application type”*. You must use the **Docker Compose** build pack ([docs](https://coolify.io/docs/builds/packs/docker-compose)).
+
+### Create or fix the resource
+
+1. **New resource** → connect this Git repo → on the step where Coolify picks a **build pack**, open the dropdown (it may show **Nixpacks** by default) and choose **Docker Compose**.
+2. **Base directory**: `/` (repo root).
+3. **Docker Compose Location**: `docker-compose.yml` (must match the filename exactly).
+4. Branch: **`main`**, then deploy.
+
+If you already created the resource as a normal **Application** (Nixpacks): open the service **Configuration** → **Build Pack** (or General) → switch to **Docker Compose**, set **Base directory** and **Docker Compose file path** as above, save, redeploy. If the UI still behaves like Nixpacks, create a **new** Docker Compose resource and delete the old one ([known quirks](https://github.com/coollabsio/coolify/issues/2972) when switching packs).
+
+### After it runs
+
+1. Assign a domain to service **`n8n`** for container port **5678** ([exposing services](https://coolify.io/docs/knowledge-base/docker/compose)).
+2. For HTTPS behind Coolify’s proxy, set environment variables in the UI (see `.env.example`): e.g. `N8N_PROTOCOL=https`, `N8N_PORT=443`, `N8N_SECURE_COOKIE=true`, `N8N_PROXY_HOPS=1`.
 
 Optional Coolify magic variables (`SERVICE_URL_N8N_5678`, `SERVICE_FQDN_N8N`) are referenced as fallbacks in `docker-compose.yml`; Git-based support needs a recent Coolify v4 (see Coolify docs).
 
