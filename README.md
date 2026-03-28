@@ -8,7 +8,7 @@ Minimal [Docker Compose](https://docs.docker.com/compose/) stack for [n8n](https
 |------|--------|
 | `docker-compose.yml` | n8n **official Docker image**, volume `n8n_data`, port **5678** |
 | `package.json` / `scripts/start.js` | **Nixpacks** (Coolify default): installs `n8n` from npm and runs `npm start` |
-| `nixpacks.toml` | Nixpacks hints (Node 22) |
+| `nixpacks.toml` | Nixpacks: Node 22, **`npm install`** (avoids fragile `npm ci` on huge trees) |
 | `.npmrc` | `legacy-peer-deps=true` so npm install/ci stays reliable |
 | `.env.example` | Copy to `.env` and adjust host, timezone, and URLs |
 
@@ -74,7 +74,9 @@ Two supported ways to deploy; pick one.
 
 ### A. Nixpacks (Coolify default — “Application”)
 
-Coolify’s default **Nixpacks** build pack detects Node from `package.json`, runs `npm install`, `npm run build`, then `npm start` ([Nixpacks Node](https://nixpacks.com/docs/providers/node)). This repo installs the [`n8n` npm package](https://docs.n8n.io/hosting/installation/npm/) and starts it; `scripts/start.js` maps Coolify’s `PORT` to `N8N_PORT`.
+Coolify’s default **Nixpacks** build pack detects Node from `package.json`, runs install → `npm run build` → `npm start` ([Nixpacks Node](https://nixpacks.com/docs/providers/node)). This repo uses **`npm install --legacy-peer-deps`** (see `nixpacks.toml`) instead of `npm ci` so large dependency trees stay reliable; there is **no `package-lock.json`** in the repo on purpose.
+
+This repo installs the [`n8n` npm package](https://docs.n8n.io/hosting/installation/npm/) and starts it; `scripts/start.js` maps Coolify’s `PORT` to `N8N_PORT`.
 
 1. **New resource** → **Application** (or Public Git) → repo **main**, build pack **Nixpacks** (default).
 2. **Base directory**: `/`.

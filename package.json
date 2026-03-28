@@ -3,7 +3,7 @@
   "private": true,
   "description": "Runs n8n via npm so Coolify Nixpacks can detect a Node app. Prefer docker-compose.yml + Docker Compose build pack for parity with the official image.",
   "engines": {
-    "node": ">=20.19 <=24"
+    "node": ">=20.19.0 <25.0.0"
   },
   "scripts": {
     "build": "node -e \"console.log('no build step')\"",

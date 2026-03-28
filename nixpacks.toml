@@ -1,5 +1,12 @@
-# Nixpacks (Coolify default): treat as Node — npm ci, npm run build, npm start
+# Nixpacks (Coolify default): Node → install → build → start
 # https://nixpacks.com/docs/configuration/file
+#
+# Use npm install (not npm ci): large n8n trees + strict lockfiles can hit npm/arborist
+# edge cases; .npmrc enables legacy-peer-deps.
 
 [variables]
 NIXPACKS_NODE_VERSION = "22"
+
+[phases.install]
+dependsOn = ["setup"]
+cmds = ["npm install --legacy-peer-deps --no-audit --no-fund"]
