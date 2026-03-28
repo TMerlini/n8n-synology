@@ -1,0 +1,32 @@
+# n8n — Docker Compose for Synology, bare metal, or Coolify (Git + Docker Compose).
+# n8n: https://docs.n8n.io/hosting/installation/docker/
+# Coolify: https://coolify.io/docs/knowledge-base/docker/compose
+#
+# Coolify: add a domain to service "n8n" (port 5678). Magic vars SERVICE_URL_N8N_5678 /
+# SERVICE_FQDN_N8N are optional fallbacks when you do not set WEBHOOK_URL / N8N_HOST in the UI.
+
+services:
+  n8n:
+    image: docker.n8n.io/n8nio/n8n:latest
+    restart: unless-stopped
+    ports:
+      - "${N8N_PUBLISH_PORT:-5678}:5678"
+    environment:
+      - TZ=${TZ:-UTC}
+      - GENERIC_TIMEZONE=${GENERIC_TIMEZONE:-UTC}
+      - N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=true
+      - N8N_RUNNERS_ENABLED=true
+      # Public hostname and URL (Coolify can fill via SERVICE_FQDN_N8N / SERVICE_URL_N8N_5678)
+      - N8N_HOST=${N8N_HOST:-${SERVICE_FQDN_N8N:-localhost}}
+      - N8N_PORT=${N8N_PORT:-5678}
+      - N8N_PROTOCOL=${N8N_PROTOCOL:-http}
+      - WEBHOOK_URL=${WEBHOOK_URL:-${SERVICE_URL_N8N_5678:-http://localhost:5678/}}
+      # Use true when WEBHOOK_URL is https (e.g. Coolify / reverse proxy TLS).
+      - N8N_SECURE_COOKIE=${N8N_SECURE_COOKIE:-false}
+      # 1 = behind Coolify, Synology, or nginx reverse proxy
+      - N8N_PROXY_HOPS=${N8N_PROXY_HOPS:-0}
+    volumes:
+      - n8n_data:/home/node/.n8n
+
+volumes:
+  n8n_data:
